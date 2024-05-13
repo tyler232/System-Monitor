@@ -12,20 +12,30 @@ class SystemMonitorApp:
         self.root.title("System Monitor")
 
         self.figure = Figure(figsize=(5, 8), dpi=100)
+        self.figure.subplots_adjust(hspace=0.5)
 
-        # CPU subplot
-        self.cpu_subplot = self.figure.add_subplot(211)
+        # CPU Usage subplot
+        self.cpu_subplot = self.figure.add_subplot(311)
         self.cpu_subplot.set_xlim(0, 60)
         self.cpu_subplot.set_ylim(0, 100)
         self.cpu_line, = self.cpu_subplot.plot([], [])
         self.cpu_subplot.set_title('CPU Usage')
 
-        # Memory subplot
-        self.mem_subplot = self.figure.add_subplot(212)
+        # Memory Usage subplot
+        self.mem_subplot = self.figure.add_subplot(312)
         self.mem_subplot.set_xlim(0, 60)
         self.mem_subplot.set_ylim(0, 100)
         self.mem_line, = self.mem_subplot.plot([], [])
         self.mem_subplot.set_title('Memory Usage')
+
+        # Disk Usage subplot
+        self.disk_subplot = self.figure.add_subplot(313)
+        self.disk_subplot.set_title('Disk Usage')
+        self.disk_usage = psutil.disk_usage('/')
+        labels = ['Used', 'Free']
+        sizes = [self.disk_usage.used, self.disk_usage.free]
+        self.disk_subplot.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
+        self.disk_subplot.axis('equal')
 
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
         self.canvas.get_tk_widget().pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
@@ -56,6 +66,15 @@ class SystemMonitorApp:
         self.cpu_subplot.autoscale_view()
         self.mem_subplot.relim()
         self.mem_subplot.autoscale_view()
+
+        # update Disk usage
+        disk_usage = psutil.disk_usage('/')
+        labels = ['Used', 'Free']
+        sizes = [disk_usage.used, disk_usage.free]
+        self.disk_subplot.clear()
+        self.disk_subplot.set_title('Disk Usage')
+        self.disk_subplot.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
+        self.disk_subplot.axis('equal')
 
     def run(self):
         self.root.mainloop()
