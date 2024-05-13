@@ -13,24 +13,47 @@ class SystemMonitorApp:
         self.root.title("System Monitor")
         self.root.geometry("1000x800")
 
-        self.process_info_label = ctk.CTkLabel(self.root, text="Processes: ")
-        self.process_info_label.pack(side='top', padx=10, pady=10)
-        self.load_info_label = ctk.CTkLabel(self.root, text="Load Average: ")
-        self.load_info_label.pack(side='top', padx=10, pady=10)
-        self.memory_label = ctk.CTkLabel(self.root, text="Memory: ")
-        self.memory_label.pack(side='top', padx=10, pady=10)
-        self.swap_label = ctk.CTkLabel(self.root, text="Swap: ")
-        self.swap_label.pack(side='top', padx=10, pady=10)
-        self.network_label = ctk.CTkLabel(self.root, text="Network I/O: ")
-        self.network_label.pack(side='top', padx=10, pady=10)
-        self.diskio_label = ctk.CTkLabel(self.root, text="Disk I/O: ")
-        self.diskio_label.pack(side='top', padx=10, pady=10)
-        self.battery_label = ctk.CTkLabel(self.root, text="Battery: ")
-        self.battery_label.pack(side='top', padx=10, pady=10)
+        self.init_info()
 
         self.figure = Figure(figsize=(10, 3), dpi=100)
         self.figure.subplots_adjust(wspace=0.5)
+        self.init_subplot()
 
+        self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
+        self.canvas.get_tk_widget().pack(fill='both', expand=True)
+
+        self.anim = animation.FuncAnimation(self.figure, self.update, interval=self.interval, save_count=1000)
+
+        self.cpu_usage = []
+        self.mem_usage = []
+        self.x_values = np.arange(0, 61)
+
+        self.root.bind("<Configure>", self.on_window_resize)
+
+    def on_window_resize(self, event):
+        self.canvas.get_tk_widget().config(width=event.width, height=event.height)
+
+
+    def init_info(self):
+        self.process_info_label = ctk.CTkLabel(self.root, text="Processes: ")
+        self.load_info_label = ctk.CTkLabel(self.root, text="Load Average: ")
+        self.cpu_label = ctk.CTkLabel(self.root, text="CPU: ")
+        self.memory_label = ctk.CTkLabel(self.root, text="Memory: ")
+        self.swap_label = ctk.CTkLabel(self.root, text="Swap: ")
+        self.network_label = ctk.CTkLabel(self.root, text="Network I/O: ")
+        self.diskio_label = ctk.CTkLabel(self.root, text="Disk I/O: ")
+        self.battery_label = ctk.CTkLabel(self.root, text="Battery: ")
+
+        self.process_info_label.pack(side='top', padx=10, pady=10)
+        self.load_info_label.pack(side='top', padx=10, pady=10)
+        self.cpu_label.pack(side='top', padx=10, pady=10)
+        self.memory_label.pack(side='top', padx=10, pady=10)
+        self.swap_label.pack(side='top', padx=10, pady=10)
+        self.network_label.pack(side='top', padx=10, pady=10)
+        self.diskio_label.pack(side='top', padx=10, pady=10)
+        self.battery_label.pack(side='top', padx=10, pady=10)
+
+    def init_subplot(self):
         # CPU Usage subplot
         self.cpu_subplot = self.figure.add_subplot(131)
         self.cpu_subplot.set_xlim(0, 60)
@@ -53,15 +76,6 @@ class SystemMonitorApp:
         sizes = [self.disk_usage.used, self.disk_usage.free]
         self.disk_subplot.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
         self.disk_subplot.axis('equal')
-
-        self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
-        self.canvas.get_tk_widget().place(x=0, y=500, width=1000, height=300)
-
-        self.anim = animation.FuncAnimation(self.figure, self.update, interval=self.interval, save_count=1000)
-
-        self.cpu_usage = []
-        self.mem_usage = []
-        self.x_values = np.arange(0, 61)
 
     def update(self, frame):
         cpu_percent = psutil.cpu_percent()
@@ -96,10 +110,12 @@ class SystemMonitorApp:
         # update info
         self.update_info()
         
+        
 
     def update_info(self):
         self.update_process_info()
         self.update_load_info()
+        self.update_cpu_info()
         self.update_memory_info()
         self.update_networkio_info()
         self.update_diskio_info()
@@ -113,6 +129,13 @@ class SystemMonitorApp:
         load_avg = os.getloadavg()
         self.load_info_label.configure(text=f"Load Average: {load_avg[0]:.2f} (1 min), {load_avg[1]:.2f} (5 min), {load_avg[2]:.2f} (15 min)")
     
+    def update_cpu_info(self):
+        logical_cpus = psutil.cpu_count()
+        physical_cpus = psutil.cpu_count(logical=False)
+        cpu_freq = psutil.cpu_freq()
+
+        self.cpu_label.configure(text=f"CPU: {logical_cpus} logical, {physical_cpus} physical, {cpu_freq.current:.2f} MHz")
+
     def update_memory_info(self):
         memory = psutil.virtual_memory()
         swap = psutil.swap_memory()
