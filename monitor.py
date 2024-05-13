@@ -10,26 +10,27 @@ class SystemMonitorApp:
         self.interval = interval
         self.root = ctk.CTk()
         self.root.title("System Monitor")
+        self.root.geometry("1000x800")
 
-        self.figure = Figure(figsize=(5, 8), dpi=100)
-        self.figure.subplots_adjust(hspace=0.5)
+        self.figure = Figure(figsize=(10, 3), dpi=100)
+        self.figure.subplots_adjust(wspace=0.5)
 
         # CPU Usage subplot
-        self.cpu_subplot = self.figure.add_subplot(311)
+        self.cpu_subplot = self.figure.add_subplot(131)
         self.cpu_subplot.set_xlim(0, 60)
         self.cpu_subplot.set_ylim(0, 100)
         self.cpu_line, = self.cpu_subplot.plot([], [])
         self.cpu_subplot.set_title('CPU Usage')
 
         # Memory Usage subplot
-        self.mem_subplot = self.figure.add_subplot(312)
+        self.mem_subplot = self.figure.add_subplot(132)
         self.mem_subplot.set_xlim(0, 60)
         self.mem_subplot.set_ylim(0, 100)
         self.mem_line, = self.mem_subplot.plot([], [])
         self.mem_subplot.set_title('Memory Usage')
 
         # Disk Usage subplot
-        self.disk_subplot = self.figure.add_subplot(313)
+        self.disk_subplot = self.figure.add_subplot(133)
         self.disk_subplot.set_title('Disk Usage')
         self.disk_usage = psutil.disk_usage('/')
         labels = ['Used', 'Free']
@@ -38,7 +39,7 @@ class SystemMonitorApp:
         self.disk_subplot.axis('equal')
 
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
-        self.canvas.get_tk_widget().pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
+        self.canvas.get_tk_widget().place(x=0, y=500, width=1000, height=300)
 
         self.anim = animation.FuncAnimation(self.figure, self.update_plot, interval=self.interval, save_count=1000)
 
@@ -82,3 +83,4 @@ class SystemMonitorApp:
 if __name__ == "__main__":
     app = SystemMonitorApp()
     app.run()
+
