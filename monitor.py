@@ -1,3 +1,4 @@
+import os
 import psutil
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -11,6 +12,21 @@ class SystemMonitorApp:
         self.root = ctk.CTk()
         self.root.title("System Monitor")
         self.root.geometry("1000x800")
+
+        self.process_info_label = ctk.CTkLabel(self.root, text="Processes: ")
+        self.process_info_label.pack(side='top', padx=10, pady=10)
+        self.load_info_label = ctk.CTkLabel(self.root, text="Load Average: ")
+        self.load_info_label.pack(side='top', padx=10, pady=10)
+        self.memory_label = ctk.CTkLabel(self.root, text="Memory: ")
+        self.memory_label.pack(side='top', padx=10, pady=10)
+        self.swap_label = ctk.CTkLabel(self.root, text="Swap: ")
+        self.swap_label.pack(side='top', padx=10, pady=10)
+        self.network_label = ctk.CTkLabel(self.root, text="Network I/O: ")
+        self.network_label.pack(side='top', padx=10, pady=10)
+        self.diskio_label = ctk.CTkLabel(self.root, text="Disk I/O: ")
+        self.diskio_label.pack(side='top', padx=10, pady=10)
+        self.battery_label = ctk.CTkLabel(self.root, text="Battery: ")
+        self.battery_label.pack(side='top', padx=10, pady=10)
 
         self.figure = Figure(figsize=(10, 3), dpi=100)
         self.figure.subplots_adjust(wspace=0.5)
@@ -41,13 +57,13 @@ class SystemMonitorApp:
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
         self.canvas.get_tk_widget().place(x=0, y=500, width=1000, height=300)
 
-        self.anim = animation.FuncAnimation(self.figure, self.update_plot, interval=self.interval, save_count=1000)
+        self.anim = animation.FuncAnimation(self.figure, self.update, interval=self.interval, save_count=1000)
 
         self.cpu_usage = []
         self.mem_usage = []
         self.x_values = np.arange(0, 61)
 
-    def update_plot(self, frame):
+    def update(self, frame):
         cpu_percent = psutil.cpu_percent()
         mem_percent = psutil.virtual_memory().percent
 
@@ -77,10 +93,66 @@ class SystemMonitorApp:
         self.disk_subplot.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
         self.disk_subplot.axis('equal')
 
+        # update info
+        self.update_info()
+        
+
+    def update_info(self):
+        self.update_process_info()
+        self.update_load_info()
+        self.update_memory_info()
+        self.update_networkio_info()
+        self.update_diskio_info()
+        self.update_battery_info()
+
+    def update_process_info(self):
+        processes = psutil.pids()
+        self.process_info_label.configure(text=f"Processes: {len(processes)} total")
+    
+    def update_load_info(self):
+        load_avg = os.getloadavg()
+        self.load_info_label.configure(text=f"Load Average: {load_avg[0]:.2f} (1 min), {load_avg[1]:.2f} (5 min), {load_avg[2]:.2f} (15 min)")
+    
+    def update_memory_info(self):
+        memory = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+
+        total_memory = memory.total
+        used_memory = memory.used
+        available_memory = memory.available
+        
+        total_swap = swap.total
+        used_swap = swap.used
+        free_swap = swap.free
+
+        self.memory_label.configure(text=f"Memory: {used_memory/1024/1024:.2f} MB used, {available_memory/1024/1024:.2f} MB available, {total_memory/1024/1024:.2f} MB total")
+        self.swap_label.configure(text=f"Swap: {used_swap/1024/1024:.2f} MB used, {free_swap/1024/1024:.2f} MB free, {total_swap/1024/1024:.2f} MB total")
+        
+    def update_networkio_info(self):
+        net_counters = psutil.net_io_counters()
+        bytes_in = net_counters.bytes_recv
+        bytes_out = net_counters.bytes_sent
+
+        self.network_label.configure(text=f"Network I/O: {bytes_out/1024/1024:.2f} MB sent, {bytes_in/1024/1024:.2f} MB received")
+
+    def update_diskio_info(self):
+        disk_counters = psutil.disk_io_counters()
+        bytes_read = disk_counters.read_bytes
+        bytes_written = disk_counters.write_bytes
+
+        self.diskio_label.configure(text=f"Disk I/O: {bytes_read/1024/1024:.2f} MB read, {bytes_written/1024/1024:.2f} MB written")
+
+    def update_battery_info(self):
+        battery = psutil.sensors_battery()
+        battery_percent = battery.percent
+        power_plugged = battery.power_plugged
+        power_plugged_status = "Plugged In" if power_plugged else "Not Plugged In"
+        self.battery_label.configure(text=f"Battery: {battery_percent}% {power_plugged_status}")
+        
+
     def run(self):
         self.root.mainloop()
 
 if __name__ == "__main__":
     app = SystemMonitorApp()
     app.run()
-
