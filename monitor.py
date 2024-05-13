@@ -25,8 +25,8 @@ class SystemMonitorApp:
         self.network_label.pack(side='top', padx=10, pady=10)
         self.diskio_label = ctk.CTkLabel(self.root, text="Disk I/O: ")
         self.diskio_label.pack(side='top', padx=10, pady=10)
-        # self.battery_label = ctk.CTkLabel(self.root, text="Battery: ")
-        # self.battery_label.pack(side='top', padx=10, pady=10)
+        self.battery_label = ctk.CTkLabel(self.root, text="Battery: ")
+        self.battery_label.pack(side='top', padx=10, pady=10)
 
         self.figure = Figure(figsize=(10, 3), dpi=100)
         self.figure.subplots_adjust(wspace=0.5)
@@ -103,7 +103,7 @@ class SystemMonitorApp:
         self.update_memory_info()
         self.update_networkio_info()
         self.update_diskio_info()
-        # self.update_battery_info()
+        self.update_battery_info()
 
     def update_process_info(self):
         processes = psutil.pids()
@@ -142,12 +142,15 @@ class SystemMonitorApp:
 
         self.diskio_label.configure(text=f"Disk I/O: {bytes_read/1024/1024:.2f} MB read, {bytes_written/1024/1024:.2f} MB written")
 
-    # def update_battery_info(self):
-    #     battery = psutil.sensors_battery()
-    #     battery_percent = battery.percent
-    #     power_plugged = battery.power_plugged
-    #     power_plugged_status = "Plugged In" if power_plugged else "Not Plugged In"
-    #     self.battery_label.configure(text=f"Battery: {battery_percent}% {power_plugged_status}")
+    def update_battery_info(self):
+        battery = psutil.sensors_battery()
+        if battery is None:
+            self.battery_label.configure(text=f"Battery Not Detected")
+            return
+        battery_percent = battery.percent
+        power_plugged = battery.power_plugged
+        power_plugged_status = "Plugged In" if power_plugged else "Not Plugged In"
+        self.battery_label.configure(text=f"Battery: {battery_percent}% {power_plugged_status}")
         
 
     def run(self):
